@@ -92,6 +92,9 @@ class Lesson(models.Model):
     teacher_pk = models.ForeignKey(User, models.SET_NULL, blank=False, null=True, related_name='teacher_lesson')
     start_datetime = models.DateTimeField(blank=False)
 
+    class Meta:
+        ordering = ['-start_datetime']
+
 
 class Price(models.Model):
     duration = models.IntegerField(blank=False, default=45)
