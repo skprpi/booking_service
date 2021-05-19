@@ -1,5 +1,5 @@
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password, identify_hasher
 from django.db import models
 
 
@@ -79,8 +79,12 @@ class User(AbstractBaseUser):
         return True
 
     def save(self, *args, **kwargs):
-        if not self.id and not self.is_staff:
+        try:
+            is_hash = identify_hasher(self.password)
+        except ValueError:
             self.password = make_password(self.password)
+        # if not self.id and not self.is_staff:
+        #     self.password = make_password(self.password)
         super().save(*args, **kwargs)
 
 
@@ -93,7 +97,7 @@ class Lesson(models.Model):
     start_datetime = models.DateTimeField(blank=False)
 
     class Meta:
-        ordering = ['-start_datetime']
+        ordering = ['start_datetime']
 
 
 class Price(models.Model):
