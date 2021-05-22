@@ -114,3 +114,10 @@ class PriceDiscipline(models.Model):
     teacher_pk = models.ForeignKey(User, models.SET_NULL, blank=False, null=True,related_name='teacher_pk')
     discipline_pk = models.ForeignKey(Discipline, models.SET_NULL, null=True,blank=False, related_name='discipline_pk')
     price_pk = models.ForeignKey(Price, models.SET_NULL, blank=False, null=True,related_name='price_pk')
+
+
+class DisciplineDescription(models.Model):
+    teacher_pk = models.ForeignKey(User, models.SET_NULL, blank=False, null=True,related_name='teacher_discipline_pk')
+    name = models.CharField(max_length=100, blank=False, null=False)
+    duration = models.IntegerField(blank=False, default=45)
+    price = models.IntegerField(blank=False, default=1000)

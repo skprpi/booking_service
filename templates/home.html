@@ -1,14 +1,107 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+
+
+{% extends "base.html" %}
+{% block title %}Зарегистрироваться{% endblock %}
+{% block content %}
+    <style>
+
+        .day-list {
+            overflow-x: scroll;
+        }
+
+        .day-content {
+            flex-wrap: nowrap;
+        }
+
+        .day-col td {
+            padding: .2rem;
+        }
+
+    </style>
     {{ text }}
 
     {% for lesson in lessons %}
         {{ lesson.start_datetime }}
     {% endfor %}
-</body>
-</html>
+
+
+
+    <div class="container">
+        <div class="row">
+            <div class="col-4">
+                <div class="container">
+                    <div class="row">
+
+
+                        {% for lesson_name, time_price_list in time_price.items %}
+                            {# имя дисциплины #}
+                            <p>{{ lesson_name }}</p>
+
+
+                            {% for el in time_price_list %}
+                                <p>{{ el }}</p>
+                            {% endfor %}
+                        {% endfor %}
+
+
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-8">
+
+                <div class="container day-list">
+                    <div class="row day-content">
+                        {% for el in n %}
+                            <div class="day-col col-4 p-3">
+
+                                <table class="table">
+                                    <thead>
+                                    <tr>
+                                        <th scope="col" colspan="4">Чт</th>
+                                    </tr>
+                                    <tr>
+                                        <th scope="col" colspan="4">20 мая</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for i in n %}
+                                        <tr>
+                                            <td>
+                                                <button type="button"
+                                                        class="btn btn-primary btn-sm">{{ i }}:00
+                                                </button>
+                                            </td>
+                                            <td>
+                                                <button type="button"
+                                                        class="btn btn-primary btn-sm">{{ i }}:00
+                                                </button>
+                                            </td>
+                                            <td>
+                                                <button type="button"
+                                                        class="btn btn-primary btn-sm">{{ i }}:00
+                                                </button>
+                                            </td>
+                                            <td>
+                                                <button type="button"
+                                                        class="btn btn-primary btn-sm">{{ i }}:00
+                                                </button>
+                                            </td>
+
+                                        </tr>
+                                    {% endfor %}
+
+                                    </tbody>
+                                </table>
+
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
