@@ -3,6 +3,9 @@
 {% extends "base.html" %}
 {% block title %}Зарегистрироваться{% endblock %}
 {% block content %}
+
+    {% load my_tags %}
+
     <style>
 
         .day-list {
@@ -14,7 +17,11 @@
         }
 
         .day-col td {
-            padding: .2rem;
+            padding: .2rem .2rem;
+        }
+
+        .day-col {
+            min-width: 290px;
         }
 
     </style>
@@ -35,12 +42,23 @@
 
                         {% for lesson_name, time_price_list in time_price.items %}
                             {# имя дисциплины #}
-                            <p>{{ lesson_name }}</p>
+                            {#                            <p>{{ lesson_name }}</p>#}
+                            <button class="btn btn-primary" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapse{{ forloop.counter }}"
+                                    aria-expanded="{% if forloop.counter == 1 %}true{% else %}false{% endif %}"
+                                    aria-controls="collapse1 collapse2 collapse3">
+                                {{ lesson_name }}
+                            </button>
 
-
-                            {% for el in time_price_list %}
-                                <p>{{ el }}</p>
-                            {% endfor %}
+                            <div class="collapse multi-collapse {% if forloop.counter == 1 %}show{% endif %}"
+                                 id="collapse{{ forloop.counter }}">
+                                <div class="card card-body">
+                                    {% for el in time_price_list %}
+                                        <p>{{ el }}</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
                         {% endfor %}
 
 
@@ -65,29 +83,23 @@
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    {% for i in n %}
+                                    {% for i in time_range %}
                                         <tr>
-                                            <td>
-                                                <button type="button"
-                                                        class="btn btn-primary btn-sm">{{ i }}:00
-                                                </button>
-                                            </td>
-                                            <td>
-                                                <button type="button"
-                                                        class="btn btn-primary btn-sm">{{ i }}:00
-                                                </button>
-                                            </td>
-                                            <td>
-                                                <button type="button"
-                                                        class="btn btn-primary btn-sm">{{ i }}:00
-                                                </button>
-                                            </td>
-                                            <td>
-                                                <button type="button"
-                                                        class="btn btn-primary btn-sm">{{ i }}:00
-                                                </button>
-                                            </td>
+                                            {% for j in n2 %}
+                                                {% widthratio i 1 4 as idx %}
+                                                {% widthratio j 1 15 as minutes %}
+                                                {% with idx2=idx|add:j %}
 
+                                                    <td>
+                                                        <button type="button" class="btn {% if idx2 in p|get_item_by_idx:el  %}btn-secondary{% else %}btn-primary{% endif %} btn-sm">{{ i }}:
+                                                            {% if j == 0 %}00{% else %}{{ minutes }}{% endif %}
+{#                                                            {{ idx2 }}#}
+                                                        </button>
+
+                                                    </td>
+
+                                                {% endwith %}
+                                            {% endfor %}
                                         </tr>
                                     {% endfor %}
 

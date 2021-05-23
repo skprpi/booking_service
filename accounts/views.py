@@ -53,6 +53,12 @@ def home2(request, teacher_pk):
             time_price[el.name] = []
         time_price[el.name].append(f'{el.duration} min - {el.price}')
     print(time_price)
+
+
+    p = [[40, 41, 42, 43, 56, 57, 58], [63, 64, 65],[53, 54, 55],[]]
+
+
+
     user_context = {
         'pk': request.user.id,
         'text': get_object_or_404(User, pk=request.user.id).email,
@@ -61,5 +67,8 @@ def home2(request, teacher_pk):
         'teacher_surname': teacher.surname,
         'time_price': time_price,
         'n': range(30),
+        'p': p,
+        'time_range': range(10, 23),
+        'n2': [0, 1, 2, 3]
     }
     return render(request, 'home.html', context=user_context)
