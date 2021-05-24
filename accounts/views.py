@@ -31,42 +31,17 @@ def user_login(request):
     return render(request, 'login.html', {'form': form})
 
 
-def home(request, pk):
-    lessons = Lesson.objects.filter(
-        student_pk=request.user.id) | Lesson.objects.filter(
-        teacher_pk=request.user.id)
-    n = 30
-    user_context = {'pk': request.user.id,
-                    'text': get_object_or_404(User, pk=request.user.id).email,
-                    'lessons': lessons, 'n': range(30)}
-    if request.user.role != UserRoles.ADMIN and request.user.id != pk:
-        return render(request, 'home.html', context=user_context)
-    admin_context = {'pk': pk, 'text': get_object_or_404(User, pk=pk).email,
-                     'lessons': lessons, 'n': range(30)}
-    return render(request, 'home.html', context=admin_context)
-
-
-def home2(request, teacher_pk):
-    teacher = get_object_or_404(User, pk=teacher_pk)
-    if teacher.role != UserRoles.TEACHER or request.user.role != UserRoles.STUDENT:
-        return
-
-    startdate = datetime.today().replace(minute=0, hour=0, second=0)
-    enddate = startdate + timedelta(days=120)
-
-    lessons = Lesson.objects.filter(student_pk=request.user.id,
-                                    start_datetime__range=[startdate,
-                                                           enddate]) | Lesson.objects.filter(
-        teacher_pk=request.user.id, start_datetime__range=[startdate, enddate])
-    disciplines = DisciplineDescription.objects.filter(teacher_pk=teacher_pk)
+def get_time_price_list(disciplines):
     time_price = {}
     for el in disciplines:
         if el.name not in time_price:
             time_price[el.name] = []
         time_price[el.name].append(f'{el.duration} min - {el.price}')
-    print(time_price)
+    return time_price
 
-    booked_times = [[] for _ in range(30)]
+
+def get_booked_times_list(lessons, count_load_days):
+    booked_times = [[] for _ in range(count_load_days)]
     for el in lessons:
         time = el.start_datetime
         time = time.replace(tzinfo=None)
@@ -77,21 +52,51 @@ def home2(request, teacher_pk):
         idx = (time.hour * 60 + time.minute + 1) // 15
         for i in range((el.duration + 1) // 15):
             booked_times[day_idx].append(idx + i)
+    return booked_times
 
+
+def get_lessons_obj(user_id, count_load_days):
+    start_date = datetime.today().replace(minute=0, hour=0, second=0)
+    end_date = start_date + timedelta(days=count_load_days)
+    lessons = Lesson.objects.filter(
+        student_pk=user_id,
+        start_datetime__range=[start_date, end_date],
+    ) | Lesson.objects.filter(
+        teacher_pk=user_id,
+        start_datetime__range=[start_date, end_date]
+    )
+    return lessons
+
+
+def get_date_week_month(count_load_days):
     week_days_names = ['-', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
-    month_names = ['-', 'январь','февраль','март','аперь','май','июнь','июль','август','сентябрь','октябрь', 'ноябрь', 'декабрь']
-    week_days = ['' for _ in range(30)]
-    date_number = [0 for _ in range(30)]
-    month_number = ['' for _ in range(30)]
-    for i in range(30):
+    month_names = ['-', 'январь', 'февраль', 'март', 'аперь', 'май', 'июнь',
+                   'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь',
+                   'декабрь']
+    week_days = ['' for _ in range(count_load_days)]
+    date_number = [0 for _ in range(count_load_days)]
+    month_number = ['' for _ in range(count_load_days)]
+    for i in range(count_load_days):
         delta = timedelta(days=i)
         next_day = datetime.today() + delta
         day_idx = next_day.isoweekday()
         week_days[i] = week_days_names[day_idx]
         date_number[i] = next_day.day
         month_number[i] = month_names[next_day.month]
+    return date_number, week_days, month_number
 
-    print(week_days)
+
+def home(request, teacher_pk):
+    count_load_days = 30
+    start_show_time = 10
+    end_show_time = 23
+
+    teacher = get_object_or_404(User, pk=teacher_pk)
+    if teacher.role != UserRoles.TEACHER or request.user.role != UserRoles.STUDENT:
+        return
+    lessons = get_lessons_obj(request.user.id, count_load_days)
+    disciplines = DisciplineDescription.objects.filter(teacher_pk=teacher_pk)
+    date_number, week_days, month_number = get_date_week_month(count_load_days)
 
     user_context = {
         'pk': request.user.id,
@@ -99,11 +104,11 @@ def home2(request, teacher_pk):
         'lessons': lessons,
         'teacher_name': teacher.name,
         'teacher_surname': teacher.surname,
-        'time_price': time_price,
-        'n': range(30),
-        'booked_times': booked_times,
-        'time_range': range(10, 23),
-        'n2': [0, 1, 2, 3],
+        'time_price': get_time_price_list(disciplines),
+        'load_days_range': range(count_load_days),
+        'booked_times': get_booked_times_list(lessons, count_load_days),
+        'time_range': range(start_show_time, end_show_time + 1),
+        'count_cell_in_row': range(4),
         'week_days': week_days,
         'date_number': date_number,
         'month_number': month_number,

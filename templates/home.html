@@ -70,7 +70,7 @@
 
                 <div class="container day-list">
                     <div class="row day-content">
-                        {% for el in n %}
+                        {% for el in load_days_range %}
                             <div class="day-col col-4 p-3">
 
                                 <table class="table">
@@ -85,7 +85,7 @@
                                     <tbody>
                                     {% for i in time_range %}
                                         <tr>
-                                            {% for j in n2 %}
+                                            {% for j in count_cell_in_row %}
                                                 <td>
                                                     <button type="button" class="btn {% if i|get_index_from_table:j in booked_times|get_item_by_idx:el  %}btn-secondary{% else %}btn-primary{% endif %} btn-sm">{{ i }}:
                                                         {% if j == 0 %}00{% else %}{{ j|get_minutes }}{% endif %}
