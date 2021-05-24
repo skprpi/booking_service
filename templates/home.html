@@ -76,29 +76,22 @@
                                 <table class="table">
                                     <thead>
                                     <tr>
-                                        <th scope="col" colspan="4">Чт</th>
+                                        <th scope="col" colspan="4">{{ week_days|get_item_by_idx:el }}</th>
                                     </tr>
                                     <tr>
-                                        <th scope="col" colspan="4">20 мая</th>
+                                        <th scope="col" colspan="4">{{ date_number|get_item_by_idx:el }} {{ month_number|get_item_by_idx:el }}</th>
                                     </tr>
                                     </thead>
                                     <tbody>
                                     {% for i in time_range %}
                                         <tr>
                                             {% for j in n2 %}
-                                                {% widthratio i 1 4 as idx %}
-                                                {% widthratio j 1 15 as minutes %}
-                                                {% with idx2=idx|add:j %}
+                                                <td>
+                                                    <button type="button" class="btn {% if i|get_index_from_table:j in booked_times|get_item_by_idx:el  %}btn-secondary{% else %}btn-primary{% endif %} btn-sm">{{ i }}:
+                                                        {% if j == 0 %}00{% else %}{{ j|get_minutes }}{% endif %}
+                                                    </button>
 
-                                                    <td>
-                                                        <button type="button" class="btn {% if idx2 in p|get_item_by_idx:el  %}btn-secondary{% else %}btn-primary{% endif %} btn-sm">{{ i }}:
-                                                            {% if j == 0 %}00{% else %}{{ minutes }}{% endif %}
-{#                                                            {{ idx2 }}#}
-                                                        </button>
-
-                                                    </td>
-
-                                                {% endwith %}
+                                                </td>
                                             {% endfor %}
                                         </tr>
                                     {% endfor %}

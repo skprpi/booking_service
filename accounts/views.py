@@ -66,7 +66,7 @@ def home2(request, teacher_pk):
         time_price[el.name].append(f'{el.duration} min - {el.price}')
     print(time_price)
 
-    days = [[] for _ in range(30)]
+    booked_times = [[] for _ in range(30)]
     for el in lessons:
         time = el.start_datetime
         time = time.replace(tzinfo=None)
@@ -76,10 +76,22 @@ def home2(request, teacher_pk):
         day_idx = delta.days
         idx = (time.hour * 60 + time.minute + 1) // 15
         for i in range((el.duration + 1) // 15):
-            days[day_idx].append(idx + i)
+            booked_times[day_idx].append(idx + i)
 
-    p = days
-    print(p)
+    week_days_names = ['-', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+    month_names = ['-', 'январь','февраль','март','аперь','май','июнь','июль','август','сентябрь','октябрь', 'ноябрь', 'декабрь']
+    week_days = ['' for _ in range(30)]
+    date_number = [0 for _ in range(30)]
+    month_number = ['' for _ in range(30)]
+    for i in range(30):
+        delta = timedelta(days=i)
+        next_day = datetime.today() + delta
+        day_idx = next_day.isoweekday()
+        week_days[i] = week_days_names[day_idx]
+        date_number[i] = next_day.day
+        month_number[i] = month_names[next_day.month]
+
+    print(week_days)
 
     user_context = {
         'pk': request.user.id,
@@ -89,8 +101,11 @@ def home2(request, teacher_pk):
         'teacher_surname': teacher.surname,
         'time_price': time_price,
         'n': range(30),
-        'p': p,
+        'booked_times': booked_times,
         'time_range': range(10, 23),
-        'n2': [0, 1, 2, 3]
+        'n2': [0, 1, 2, 3],
+        'week_days': week_days,
+        'date_number': date_number,
+        'month_number': month_number,
     }
     return render(request, 'home.html', context=user_context)
