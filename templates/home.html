@@ -1,112 +1,85 @@
 
 
-{% extends "base.html" %}
-{% block title %}Зарегистрироваться{% endblock %}
-{% block content %}
+{% load my_tags %}
 
-    {% load my_tags %}
+<style>
 
-    <style>
+    .day-list {
+        overflow-x: scroll;
+    }
 
-        .day-list {
-            overflow-x: scroll;
-        }
+    .day-content {
+        flex-wrap: nowrap;
+    }
 
-        .day-content {
-            flex-wrap: nowrap;
-        }
+    .day-col td {
+        padding: .2rem .2rem;
+    }
 
-        .day-col td {
-            padding: .2rem .2rem;
-        }
-
-        .day-col {
-            min-width: 290px;
-        }
-
-    </style>
-    {{ text }}
-
-    {% for lesson in lessons %}
-        {{ lesson.start_datetime }}
-    {% endfor %}
+    .day-col {
+        min-width: 290px;
+        max-width: 290px;
+    }
 
 
 
-    <div class="container">
-        <div class="row">
-            <div class="col-4">
-                <div class="container">
-                    <div class="row">
+</style>
 
 
-                        {% for lesson_name, time_price_list in time_price.items %}
-                            {# имя дисциплины #}
-                            {#                            <p>{{ lesson_name }}</p>#}
-                            <button class="btn btn-primary" type="button"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#collapse{{ forloop.counter }}"
-                                    aria-expanded="{% if forloop.counter == 1 %}true{% else %}false{% endif %}"
-                                    aria-controls="collapse1 collapse2 collapse3">
-                                {{ lesson_name }}
-                            </button>
+<div class="container">
+    <div class="row">
 
-                            <div class="collapse multi-collapse {% if forloop.counter == 1 %}show{% endif %}"
-                                 id="collapse{{ forloop.counter }}">
-                                <div class="card card-body">
-                                    {% for el in time_price_list %}
-                                        <p>{{ el }}</p>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        {% endfor %}
+        <div class="col-12">
 
+            <div class="container day-list">
+                <div class="row day-content">
+                    {% for el in load_days_range %}
+                        <div class="day-col col-4 p-3" data-id="{{ el }}">
 
-                    </div>
-                </div>
-
-            </div>
-            <div class="col-8">
-
-                <div class="container day-list">
-                    <div class="row day-content">
-                        {% for el in load_days_range %}
-                            <div class="day-col col-4 p-3">
-
-                                <table class="table">
-                                    <thead>
+                            <table class="table">
+                                <thead>
+                                <tr>
+                                    <th scope="col"
+                                        colspan="4">{{ week_days|get_item_by_idx:el }}</th>
+                                </tr>
+                                <tr>
+                                    <th scope="col"
+                                        colspan="4">{{ date_number|get_item_by_idx:el }} {{ month_number|get_item_by_idx:el }}</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for i in time_range %}
                                     <tr>
-                                        <th scope="col" colspan="4">{{ week_days|get_item_by_idx:el }}</th>
+                                        {% for j in count_cell_in_row %}
+                                            <td>
+                                                <button data-id="{{ i|get_index_from_table:j }}"
+                                                        type="button"
+                                                        class="time-select btn {% if i|get_index_from_table:j in booked_times|get_item_by_idx:el %}btn-secondary{% else %}btn-primary{% endif %} btn-sm">
+                                                    {% if i >= 10 %}
+                                                        {{ i }}{% else %}0{{ i }}{% endif %}:
+                                                    {% if j == 0 %}
+                                                        00{% else %}
+                                                        {{ j|get_minutes }}{% endif %}
+                                                </button>
+
+                                            </td>
+                                        {% endfor %}
                                     </tr>
-                                    <tr>
-                                        <th scope="col" colspan="4">{{ date_number|get_item_by_idx:el }} {{ month_number|get_item_by_idx:el }}</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {% for i in time_range %}
-                                        <tr>
-                                            {% for j in count_cell_in_row %}
-                                                <td>
-                                                    <button type="button" class="btn {% if i|get_index_from_table:j in booked_times|get_item_by_idx:el  %}btn-secondary{% else %}btn-primary{% endif %} btn-sm">{{ i }}:
-                                                        {% if j == 0 %}00{% else %}{{ j|get_minutes }}{% endif %}
-                                                    </button>
+                                {% endfor %}
 
-                                                </td>
-                                            {% endfor %}
-                                        </tr>
-                                    {% endfor %}
+                                </tbody>
+                            </table>
 
-                                    </tbody>
-                                </table>
-
-                            </div>
-                        {% endfor %}
-                    </div>
+                        </div>
+                    {% endfor %}
                 </div>
-
             </div>
+
         </div>
     </div>
+</div>
 
-{% endblock %}
+
+
+
 

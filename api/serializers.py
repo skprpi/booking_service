@@ -45,6 +45,7 @@ class ThinLessonSerializer(serializers.ModelSerializer):
         model = Lesson
         fields = ('id', 'duration', 'start_datetime', 'url')
 
+
 class PriceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Price

@@ -1,0 +1,220 @@
+
+
+{% extends "base.html" %}
+{% block title %}Выбор дисциплины{% endblock %}
+{% block content %}
+    {% load my_tags %}
+    {% load static %}
+
+    <style>
+    .startContent {
+        display: block;
+    }
+
+    .secondContainer {
+        display: block;
+    }
+
+    </style>
+    <div class="container">
+        <div class="row">
+            <div class="col align-self-center">
+
+            </div>
+        </div>
+    </div>
+    <div id="innerContainer2" class="col-12 btn-group-vertical" data-toggle="buttons">
+
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-3"></div>
+            <div class="col-6">
+                <div id="startContent" class="col-12 btn-group-vertical startContent" data-toggle="buttons">
+
+
+                    {% for discipline_name in disciplines %}
+                        <p class="col-12">
+                            <label class="col-12 btn btn-outline-primary btn-lg btn-block">
+                                <input type="radio" name="options"
+                                       id="{{ forloop.counter }}"
+                                       autocomplete="off">
+                                {{ discipline_name }}
+                            </label>
+                        </p>
+                    {% endfor %}
+                </div>
+            <div id="innerContainer" class="col-12 btn-group-vertical secondContainer" data-toggle="buttons">
+
+            </div>
+
+            </div>
+            {#            <div class="col-3"></div>#}
+        </div>
+    </div>
+
+
+    <form method="POST" autocomplete="off" onsubmit="return false;">
+        {% csrf_token %}
+        <input name="nextStep" type="hidden" id="nextStep">
+        <button id="sendData" class="btn btn-info">Забронировать</button>
+    </form>
+
+
+    <script src="{% static 'js/jQery.js' %}"></script>
+    <script>
+
+    $(window).on('popstate', function() {
+         window.location.reload()
+    });
+
+    let discipline_name = ''
+    let duration = 0
+    let periods = {};
+
+    $("#sendData").on("click", function (){
+        let display = getComputedStyle(document.querySelector('.startContent')).display
+        let display2 = getComputedStyle(document.querySelector('.secondContainer')).display
+
+        history.pushState({}, document.title, "")
+
+
+        if (display == 'block') {
+
+            let radio_button = document.getElementsByName('options')
+            let hh = document.getElementsByClassName('col-12 btn btn-outline-primary btn-lg btn-block')
+            let num = 0
+            for (let i = 0; i < radio_button.length; i++) {
+                if (radio_button[i].checked) {
+                    num = i
+                }
+            }
+            discipline_name = hh[num].textContent.trim();
+            $.ajax({
+                url: 'ajax/data/',
+                type: 'POST',
+                cache: false,
+                data: {'discipline_name': JSON.stringify(discipline_name)},
+                dataType: 'html',
+                success: function (data) {
+                    let obj = JSON.parse(data)
+                    document.querySelector('.startContent').style.display = 'none'
+                    let element = document.getElementById("innerContainer")
+                    element.innerHTML = obj['html']
+                },
+            })
+        } else if (display2 == 'block') {
+            let radio_button = document.getElementsByName('times')
+            let hh = document.getElementsByName('labelName')
+            let num = 0
+            for (let i = 0; i < radio_button.length; i++) {
+                if (radio_button[i].checked) {
+                    num = i
+                }
+            }
+            duration = +hh[num].textContent.trim().split(' ', 1)[0] / 15;
+            $.ajax({
+                url: 'ajax/data2/',
+                type: 'POST',
+                cache: false,
+                data: {'res': JSON.stringify(duration)},
+                dataType: 'html',
+                success: function (data) {
+                    {#let obj = JSON.parse(data)#}
+                    {#alert(obj['html'])#}
+                    let element = document.getElementById("innerContainer2")
+                    element.innerHTML = data
+                    document.querySelector('.secondContainer').style.display = 'none'
+                    initHome(duration)
+                    alert(a)
+                    {##}
+                    {#window.open('/home/1/',)#}
+                }
+            })
+        } else {
+            $.ajax({
+                url: 'ajax/data3/',
+                type: 'POST',
+                cache: false,
+                data: {
+                    'discipline_name': JSON.stringify(discipline_name),
+                    'duration': JSON.stringify(duration),
+                    'periods': JSON.stringify(periods)
+                },
+                dataType: 'html',
+                success: function (data) {
+                    let obj = JSON.parse(data)
+                    document.querySelector('.startContent').style.display = 'none'
+                    let element = document.getElementById("innerContainer")
+                    element.innerHTML = obj['html']
+                },
+            })
+        }
+    })
+
+
+    function initHome(count) {
+
+        $(".time-select").click((ev)=>{
+            const $elem = $(ev.target);
+
+            if ($elem.hasClass('btn-secondary')) return
+
+            $elem.toggleClass('btn-primary').toggleClass('btn-success');
+            const $dayCol = $elem.closest('.day-col')
+            const dayId = $dayCol.data('id');
+            const periodId = $elem.data('id')
+
+
+
+            if ($elem.hasClass('btn-success')) {
+                periods[dayId] = periods[dayId] || {};
+                periods[dayId][periodId] = 1;
+
+
+                for(let i=-count + 1; i<count;i++) {
+                    if (i == 0) continue
+                    const next = $dayCol.find(`[data-id=${+periodId + i}]`)
+                    if (next.hasClass('btn-primary')) {
+                        next.removeClass('btn-primary')
+                        next.addClass(`my-tag btn-secondary my-tag-${periodId}`)
+                    } else if (next.hasClass('my-tag')) {
+                         next.addClass(`my-tag-${periodId}`)
+                    }
+                }
+            } else {
+
+                for(let i=-count + 1; i<count;i++) {
+                    if (i == 0) continue
+                    const next = $dayCol.find(`[data-id=${+periodId + i}]`)
+                    if (next.hasClass('my-tag')) {
+                        let ok = true
+                        for (let j = count; j <= count * 2; j++)
+                        {
+                            if (next.hasClass(`my-tag-${periodId - j}`) || next.hasClass(`my-tag-${periodId + j}`)) {
+                                next.removeClass(`my-tag-${periodId}`)
+                                ok = false
+                            }
+                        }
+                        if (ok) {
+                            next.addClass('btn-primary')
+                            next.removeClass(`my-tag-${periodId} my-tag btn-secondary`)
+                        }
+                    }
+                }
+
+
+                delete periods[dayId][periodId];
+            }
+
+            $('#periods').val(JSON.stringify(periods));
+        })
+    }
+
+    </script>
+
+
+
+{% endblock %}
+

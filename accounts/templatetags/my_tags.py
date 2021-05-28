@@ -26,6 +26,18 @@ def get_minutes(a):
     except:
         return None
 
+@register.filter
+def get_collapse_name(a):
+    try:
+        s = ''
+        for i in range(len(a)):
+            s += 'collapse' + str(i + 1) + ' '
+        s.rsplit(' ')
+        return s
+    except:
+        return None
+
 register.filter('get_item_by_idx', get_item_by_idx)
 register.filter('get_index_from_table', get_index_from_table)
 register.filter('get_minutes', get_minutes)
+register.filter('get_collapse_name', get_collapse_name)
