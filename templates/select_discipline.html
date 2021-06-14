@@ -6,16 +6,30 @@
     {% load my_tags %}
     {% load static %}
 
-    <style>
-    .startContent {
-        display: block;
-    }
 
-    .secondContainer {
-        display: block;
-    }
+
+    <style>
+        .startContent {
+            display: block;
+        }
+
+        .secondContainer {
+            display: block;
+        }
+
+        .centerDiv {
+            background-size: 100%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            transform: translate(-50%, -50%);
+        }
+
 
     </style>
+
+
     <div class="container">
         <div class="row">
             <div class="col align-self-center">
@@ -23,15 +37,19 @@
             </div>
         </div>
     </div>
-    <div id="innerContainer2" class="col-12 btn-group-vertical" data-toggle="buttons">
+    <div id="innerContainer2" class="col-12 btn-group-vertical"
+         data-toggle="buttons">
 
     </div>
 
-    <div class="container">
+    <div class="centerDiv">
         <div class="row">
+
             <div class="col-3"></div>
-            <div class="col-6">
-                <div id="startContent" class="col-12 btn-group-vertical startContent" data-toggle="buttons">
+            <div class="col-6  vertical-center">
+                <div id="startContent"
+                     class="col-12 btn-group-vertical startContent"
+                     data-toggle="buttons">
 
 
                     {% for discipline_name in disciplines %}
@@ -45,9 +63,11 @@
                         </p>
                     {% endfor %}
                 </div>
-            <div id="innerContainer" class="col-12 btn-group-vertical secondContainer" data-toggle="buttons">
+                <div id="innerContainer"
+                     class="col-12 btn-group-vertical secondContainer"
+                     data-toggle="buttons">
 
-            </div>
+                </div>
 
             </div>
             {#            <div class="col-3"></div>#}
@@ -65,34 +85,47 @@
     <script src="{% static 'js/jQery.js' %}"></script>
     <script>
 
-    $(window).on('popstate', function() {
-         window.location.reload()
-    });
+        $(window).on('popstate', function () {
+            window.location.reload()
+        });
 
-    let discipline_name = ''
-    let duration = 0
-    let periods = {};
+        let discipline_name = ''
+        let duration = 0
+        let periods = {};
+        let period_size = 0
+        let price = 1000
 
-    $("#sendData").on("click", function (){
-        let display = getComputedStyle(document.querySelector('.startContent')).display
-        let display2 = getComputedStyle(document.querySelector('.secondContainer')).display
+        $("#sendData").on("click", function () {
+            let display = getComputedStyle(document.querySelector('.startContent')).display
+            let display2 = getComputedStyle(document.querySelector('.secondContainer')).display
 
-        history.pushState({}, document.title, "")
+            history.pushState({}, document.title, "")
 
+            if (display == 'block') {
+                getDiscipline()
+            } else if (display2 == 'block') {
+                getLessons()
+            } else {
+                bookLessons()
+            }
+        })
 
-        if (display == 'block') {
-
+        function getDiscipline() {
             let radio_button = document.getElementsByName('options')
             let hh = document.getElementsByClassName('col-12 btn btn-outline-primary btn-lg btn-block')
-            let num = 0
+            let num = -1
             for (let i = 0; i < radio_button.length; i++) {
                 if (radio_button[i].checked) {
                     num = i
                 }
             }
+            if (num == -1) {
+                alert('Выберите хотя бы одну опцию')
+                return
+            }
             discipline_name = hh[num].textContent.trim();
             $.ajax({
-                url: 'ajax/data/',
+                url: 'ajax/get_discipline/',
                 type: 'POST',
                 cache: false,
                 data: {'discipline_name': JSON.stringify(discipline_name)},
@@ -104,43 +137,53 @@
                     element.innerHTML = obj['html']
                 },
             })
-        } else if (display2 == 'block') {
+        }
+
+        function getLessons() {
             let radio_button = document.getElementsByName('times')
             let hh = document.getElementsByName('labelName')
-            let num = 0
+            let num = -1
             for (let i = 0; i < radio_button.length; i++) {
                 if (radio_button[i].checked) {
                     num = i
                 }
             }
+            if (num == -1) {
+                alert('Выберите хотя бы одну опцию')
+                return
+            }
             duration = +hh[num].textContent.trim().split(' ', 1)[0] / 15;
+            let lastIdx = hh[num].textContent.trim().split(' ').length - 2
+            price = +hh[num].textContent.trim().split(' ')[lastIdx]
             $.ajax({
-                url: 'ajax/data2/',
+                url: 'ajax/get_lessons/',
                 type: 'POST',
                 cache: false,
                 data: {'res': JSON.stringify(duration)},
                 dataType: 'html',
                 success: function (data) {
-                    {#let obj = JSON.parse(data)#}
-                    {#alert(obj['html'])#}
                     let element = document.getElementById("innerContainer2")
                     element.innerHTML = data
                     document.querySelector('.secondContainer').style.display = 'none'
                     initHome(duration)
-                    alert(a)
-                    {##}
-                    {#window.open('/home/1/',)#}
                 }
             })
-        } else {
+        }
+
+        function bookLessons() {
+            if (period_size == 0) {
+                alert('Выберите хотя бы одну опцию')
+                return
+            }
             $.ajax({
-                url: 'ajax/data3/',
+                url: 'ajax/make_db_note/',
                 type: 'POST',
                 cache: false,
                 data: {
                     'discipline_name': JSON.stringify(discipline_name),
                     'duration': JSON.stringify(duration),
-                    'periods': JSON.stringify(periods)
+                    'periods': JSON.stringify(periods),
+                    'price': JSON.stringify(price),
                 },
                 dataType: 'html',
                 success: function (data) {
@@ -151,66 +194,63 @@
                 },
             })
         }
-    })
 
 
-    function initHome(count) {
+        function initHome(count) {
 
-        $(".time-select").click((ev)=>{
-            const $elem = $(ev.target);
+            $(".time-select").click((ev) => {
+                const $elem = $(ev.target);
 
-            if ($elem.hasClass('btn-secondary')) return
+                if ($elem.hasClass('btn-secondary')) return
 
-            $elem.toggleClass('btn-primary').toggleClass('btn-success');
-            const $dayCol = $elem.closest('.day-col')
-            const dayId = $dayCol.data('id');
-            const periodId = $elem.data('id')
-
-
-
-            if ($elem.hasClass('btn-success')) {
-                periods[dayId] = periods[dayId] || {};
-                periods[dayId][periodId] = 1;
+                $elem.toggleClass('btn-primary').toggleClass('btn-success');
+                const $dayCol = $elem.closest('.day-col')
+                const dayId = $dayCol.data('id');
+                const periodId = $elem.data('id')
 
 
-                for(let i=-count + 1; i<count;i++) {
-                    if (i == 0) continue
-                    const next = $dayCol.find(`[data-id=${+periodId + i}]`)
-                    if (next.hasClass('btn-primary')) {
-                        next.removeClass('btn-primary')
-                        next.addClass(`my-tag btn-secondary my-tag-${periodId}`)
-                    } else if (next.hasClass('my-tag')) {
-                         next.addClass(`my-tag-${periodId}`)
+                if ($elem.hasClass('btn-success')) {
+                    periods[dayId] = periods[dayId] || {};
+                    periods[dayId][periodId] = 1;
+                    period_size += 1
+
+                    for (let i = -count + 1; i < count; i++) {
+                        if (i == 0) continue
+                        const next = $dayCol.find(`[data-id=${+periodId + i}]`)
+                        if (next.hasClass('btn-primary')) {
+                            next.removeClass('btn-primary')
+                            next.addClass(`my-tag btn-secondary my-tag-${periodId}`)
+                        } else if (next.hasClass('my-tag')) {
+                            next.addClass(`my-tag-${periodId}`)
+                        }
                     }
-                }
-            } else {
+                } else {
 
-                for(let i=-count + 1; i<count;i++) {
-                    if (i == 0) continue
-                    const next = $dayCol.find(`[data-id=${+periodId + i}]`)
-                    if (next.hasClass('my-tag')) {
-                        let ok = true
-                        for (let j = count; j <= count * 2; j++)
-                        {
-                            if (next.hasClass(`my-tag-${periodId - j}`) || next.hasClass(`my-tag-${periodId + j}`)) {
-                                next.removeClass(`my-tag-${periodId}`)
-                                ok = false
+                    for (let i = -count + 1; i < count; i++) {
+                        if (i == 0) continue
+                        const next = $dayCol.find(`[data-id=${+periodId + i}]`)
+                        if (next.hasClass('my-tag')) {
+                            let ok = true
+                            for (let j = count; j <= count * 2; j++) {
+                                if (next.hasClass(`my-tag-${periodId - j}`) || next.hasClass(`my-tag-${periodId + j}`)) {
+                                    next.removeClass(`my-tag-${periodId}`)
+                                    ok = false
+                                }
+                            }
+                            if (ok) {
+                                next.addClass('btn-primary')
+                                next.removeClass(`my-tag-${periodId} my-tag btn-secondary`)
                             }
                         }
-                        if (ok) {
-                            next.addClass('btn-primary')
-                            next.removeClass(`my-tag-${periodId} my-tag btn-secondary`)
-                        }
                     }
+
+                    period_size -= 1
+                    delete periods[dayId][periodId];
                 }
 
-
-                delete periods[dayId][periodId];
-            }
-
-            $('#periods').val(JSON.stringify(periods));
-        })
-    }
+                $('#periods').val(JSON.stringify(periods));
+            })
+        }
 
     </script>
 

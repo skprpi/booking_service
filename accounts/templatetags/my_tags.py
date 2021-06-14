@@ -37,7 +37,17 @@ def get_collapse_name(a):
     except:
         return None
 
+@register.filter
+def make_zerofill(a):
+    try:
+        if int(a) < 10:
+            return '0' + str(a)
+        return a
+    except:
+        return None
+
 register.filter('get_item_by_idx', get_item_by_idx)
 register.filter('get_index_from_table', get_index_from_table)
 register.filter('get_minutes', get_minutes)
 register.filter('get_collapse_name', get_collapse_name)
+register.filter('make_zerofill', make_zerofill)

@@ -24,7 +24,7 @@ SECRET_KEY = 'django-insecure-dz$+vc*2wi@(%p45bt@2a=3kg5+koiwj74565$w3t$ror7lis@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*",]
 
 # Application definition
 
@@ -35,8 +35,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.flatpages',
+    'sorl.thumbnail',
+    'django.contrib.sites',
     'accounts',
     'rest_framework',
+    'posts',
     'api',
 ]
 
@@ -137,3 +141,15 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'booking_service/static/')
 STATIC_DIR = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [STATIC_DIR, ]
+
+
+# LOGIN_URL = "/login/"
+# LOGIN_REDIRECT_URL = "index"
+
+SITE_ID = 1
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}

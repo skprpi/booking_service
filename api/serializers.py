@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from accounts.models import Price, Lesson
+from accounts.models import Lesson
 from django.contrib.auth import get_user_model
 
 class UserSerializer(serializers.ModelSerializer):
@@ -44,10 +44,4 @@ class ThinLessonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lesson
         fields = ('id', 'duration', 'start_datetime', 'url')
-
-
-class PriceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Price
-        fields = '__all__'
 

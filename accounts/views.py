@@ -1,15 +1,15 @@
-from datetime import datetime, timedelta
-import requests, json
-from django.contrib.auth import login, get_user_model
-from django.http import JsonResponse
-from django.shortcuts import render, redirect, get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
 import ast
+from datetime import datetime, timedelta
+
+from django.contrib import auth
+from django.contrib.auth import login, get_user_model
+from django.http import JsonResponse, HttpResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_exempt
+
 from .forms import UserLoginForm, UserRegisterForm
 from .models import UserRoles, Lesson, DisciplineDescription
-
-from django.template import Context, Template
-from django.views.decorators.cache import never_cache
 
 User = get_user_model()
 
@@ -30,10 +30,16 @@ def user_login(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect('home', teacher_pk=1)
+            return redirect('select_discipline', teacher_pk=1)
     else:
         form = UserLoginForm()
     return render(request, 'login.html', {'form': form})
+
+
+def user_logout(request):
+    if request.method == 'POST':
+        auth.logout(request)
+        return redirect('/')
 
 
 def get_time_price_list(disciplines):
@@ -45,11 +51,10 @@ def get_time_price_list(disciplines):
     return time_price
 
 
-def get_booked_times_list(lessons, count_load_days, teacher_break, lesson_time):
+def get_booked_times_list(lessons, count_load_days, teacher_break,
+                          lesson_time):
     booked_times = [[] for _ in range(count_load_days)]
-
     interval = teacher_break // 15
-
     for el in lessons:
         time = el.start_datetime
         time = time.replace(tzinfo=None)
@@ -58,7 +63,8 @@ def get_booked_times_list(lessons, count_load_days, teacher_break, lesson_time):
 
         day_idx = delta.days
         idx = (time.hour * 60 + time.minute + 1) // 15
-        for i in range(-interval - lesson_time, (el.duration + 1) // 15 + interval):
+        for i in range(-interval - lesson_time,
+                       (el.duration + 1) // 15 + interval):
             if 0 <= idx + i < 24 * 4:
                 booked_times[day_idx].append(idx + i)
     return booked_times
@@ -70,9 +76,11 @@ def get_lessons_obj(user_id, count_load_days):
     lessons = Lesson.objects.filter(
         student_pk=user_id,
         start_datetime__range=[start_date, end_date],
+        is_cansalled=False,
     ) | Lesson.objects.filter(
         teacher_pk=user_id,
-        start_datetime__range=[start_date, end_date]
+        start_datetime__range=[start_date, end_date],
+        is_cansalled=False,
     )
     return lessons
 
@@ -115,7 +123,7 @@ def select_discipline(request, teacher_pk):
 
 
 @csrf_exempt
-def make_some(request, teacher_pk):
+def get_discipline(request, teacher_pk):
     discipline_name = request.POST.get('discipline_name', None).strip('"')
     print(discipline_name)
     available_time = DisciplineDescription.objects.filter(
@@ -133,24 +141,21 @@ def make_some(request, teacher_pk):
                 f'<input type="radio" name="times" id="{i}" ' \
                 f'autocomplete="off">{time_price_list[i][0]} минут - {time_price_list[i][1]} рублей </label></p>'
 
-    new_html = open('templates\home.html').read()
-
     data = {
         'html': html,
-        'params': new_html,
     }
     return JsonResponse(data)  # render(request, 'login.html')
 
 
-@csrf_exempt
-def make_some2(request, teacher_pk):
+count_load_days = 30
+start_show_time = 10
+end_show_time = 22
 
+
+@csrf_exempt
+def get_lessons(request, teacher_pk):
     lesson_time = int(request.POST.get('res', None).strip('"'))
     print(lesson_time)
-
-    count_load_days = 30
-    start_show_time = 10
-    end_show_time = 22
 
     teacher = get_object_or_404(User, pk=teacher_pk)
     if teacher.role != UserRoles.TEACHER or request.user.role != UserRoles.STUDENT:
@@ -183,33 +188,80 @@ def make_some2(request, teacher_pk):
 
 
 @csrf_exempt
-def make_some3(request, teacher_pk):
-
+def make_db_note(request, teacher_pk):
     teacher = get_object_or_404(User, id=teacher_pk)
 
     discipline_name = request.POST.get('discipline_name', None).strip('"')
     duration_15 = int(request.POST.get('duration', None).strip('"'))
     periods = ast.literal_eval(request.POST.get('periods'))
-
-
+    price = int(request.POST.get('price', None).strip('"'))
 
     for day in periods:
         for time in periods[day]:
-            delta = timedelta(days=int(day), minutes=int(time) * 15 % 60, hours=int(time) * 15 // 60)
-            start_time = datetime.today().replace(minute=0, hour=0, second=0) + delta
-
-
-
-            lesson = Lesson.objects.create(
+            delta = timedelta(days=int(day), minutes=int(time) * 15 % 60,
+                              hours=int(time) * 15 // 60)
+            start_time = datetime.today().replace(minute=0, hour=0,
+                                                  second=0) + delta
+            Lesson.objects.create(
                 duration=duration_15 * 15,
                 student_pk=request.user,
                 teacher_pk=teacher,
-                start_datetime=start_time
+                start_datetime=start_time,
+                name=discipline_name,
+                price=price,
             )
-            print(lesson.start_datetime)
-
-    # if teacher.role != UserRoles.TEACHER or request.user.role != UserRoles.STUDENT:
-    #     return
     print(discipline_name, duration_15, periods)
-
+    return HttpResponse('OK')
     # return render(request, 'home.html', context=user_context)
+
+
+def get_my_lesson_list(my_lessons):
+    res = [[] for _ in range(count_load_days)]
+    for el in my_lessons:
+        print(el.__dict__)
+        time = el.start_datetime
+        time = time.replace(tzinfo=None)
+        delta = time - datetime.today().replace(minute=0, hour=0, second=0)
+        day_idx = delta.days
+        teacher = User.objects.get(id=el.teacher_pk.id)
+        min_ = el.start_datetime.minute
+        start_minute = min_ if min_ >= 10 else '0' + str(min_)
+        hr = el.start_datetime.hour
+        start_hour = hr if hr >= 10 else '0' + str(hr)
+
+        finish_time = el.start_datetime + timedelta(hours=el.duration // 60,
+                                                    minutes=el.duration % 60)
+        finish_min = finish_time.minute
+        finish_min = finish_min if finish_min >= 10 else '0' + str(finish_min)
+        finish_hour = finish_time.hour
+        finish_hour = finish_hour if finish_hour >= 10 else '0' + str(
+            finish_hour)
+
+        res[day_idx].append(
+            [f'{start_hour}:{start_minute} - {finish_hour}:{finish_min}',
+             el.price, el.name, teacher.surname + ' ' + teacher.name, el.id])
+    return res
+
+
+def get_timetable(request):
+    my_lessons = get_my_lesson_list(
+        get_lessons_obj(request.user.id, count_load_days))
+    date_number, week_days, month_number = get_date_week_month(count_load_days)
+    user_context = {
+        'load_days_range': range(count_load_days),
+        'week_days': week_days,
+        'date_number': date_number,
+        'month_number': month_number,
+        'lessons': my_lessons,
+    }
+    return render(request, 'timetable.html', context=user_context)
+
+
+@csrf_exempt
+def cancel_lesson(request):
+    print(request)
+    lesson_id = int(request.POST.get('lesson_id', None).strip('"'))
+    lesson = Lesson.objects.get(id=lesson_id)
+    lesson.is_cansalled = True
+    lesson.save(update_fields=['is_cansalled'])
+    return HttpResponse('OK')

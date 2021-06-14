@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Выбор дисциплины{% endblock %}
+{% block content %}
+    {% load my_tags %}
+    {% load static %}
+
+    <style>
+
+        .day-list {
+            overflow-x: scroll;
+        }
+
+        .day-content {
+            flex-wrap: nowrap;
+        }
+
+        .day-col td {
+            padding: .2rem .2rem;
+        }
+
+        .day-col {
+            min-width: 290px;
+            max-width: 290px;
+        }
+
+        .cancel-button {
+            margin-left: 20px;
+        }
+
+    </style>
+    <div class="container">
+        <div class="row">
+
+            <div class="col-12">
+
+                <div class="container day-list">
+                    <div class="row day-content">
+                        {% for el in load_days_range %}
+                            <div class="day-col col-4 p-3" data-id="{{ el }}">
+
+                                <table class="table" id="parent-table">
+                                    <thead>
+                                    <tr>
+                                        <th scope="col"
+                                            colspan="4">{{ week_days|get_item_by_idx:el }}</th>
+                                    </tr>
+                                    <tr>
+                                        <th scope="col"
+                                            colspan="4">{{ date_number|get_item_by_idx:el }} {{ month_number|get_item_by_idx:el }}</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for lesson in lessons|get_item_by_idx:el %}
+                                        <tr  id="{{ lesson|get_item_by_idx:4 }}">
+                                            <td>
+                                                <p>{{ lesson|get_item_by_idx:3 }} </p>
+                                                <p> {{ lesson|get_item_by_idx:2 }}
+                                                    - {{ lesson|get_item_by_idx:1 }}
+                                                    рублей </p>
+                                                <p>{{ lesson|get_item_by_idx:0 }}
+                                                    <button data-id="{{ lesson|get_item_by_idx:4 }}"
+                                                            type="button"
+                                                            class="btn btn-outline-danger cancel-button">
+                                                        Отменить
+                                                    </button>
+                                                </p>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+
+
+                                    </tbody>
+                                </table>
+
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'js/jQery.js' %}"></script>
+    <script>
+
+        $(window).on('popstate', function () {
+            window.location.reload()
+        });
+
+        $(".cancel-button").click((ev) => {
+            const elem = $(ev.target);
+            const lessonId = elem.data('id')
+            $.ajax({
+                url: 'ajax/cancel_lesson/',
+                type: 'POST',
+                cache: false,
+                data: {
+                    'lesson_id': JSON.stringify(lessonId),
+                },
+                dataType: 'html',
+                success: function (data) {
+                    $(`#${lessonId}`).remove()
+                },
+            })
+        })
+    </script>
+
+{% endblock %}
