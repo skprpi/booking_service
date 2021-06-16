@@ -42,6 +42,15 @@
                                     </a>
                                     {% endif %}
                                     </li>
+                                      {% if author.role == "teacher" and user.role == "student" %}
+                                     <li class="list-group-item">
+                                     <a class="btn btn-lg btn-primary"
+                                             href="{% url 'select_discipline' author.id %}" role="button">
+                                             Забронировать занятие
+                                     </a>
+                                     </li>
+                                    {% endif %}
+
                             </ul>
                     </div>
             </div>

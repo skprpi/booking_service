@@ -36,7 +36,7 @@ class Post(models.Model):
     image = models.ImageField(
         upload_to='posts/',
         blank=True, null=True,
-        verbose_name='Картиночка :)',
+        verbose_name='Изображение',
     )
 
     class Meta:

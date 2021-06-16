@@ -10,18 +10,16 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .forms import UserLoginForm, UserRegisterForm
 from .models import UserRoles, Lesson, DisciplineDescription
+from django.urls import reverse_lazy
+from django.views.generic import CreateView
 
 User = get_user_model()
 
 
-def user_register(request):
-    if request.method == 'POST':
-        form = UserRegisterForm(request.POST)
-        if form.is_valid():
-            form.save()
-    else:
-        form = UserRegisterForm()
-    return render(request, 'register.html', {'form': form})
+class SignUp(CreateView):
+    form_class = UserRegisterForm
+    success_url = reverse_lazy('login')
+    template_name = 'register.html'
 
 
 def user_login(request):
@@ -30,16 +28,16 @@ def user_login(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect('select_discipline', teacher_pk=1)
+            return redirect('index')
     else:
         form = UserLoginForm()
     return render(request, 'login.html', {'form': form})
 
 
 def user_logout(request):
-    if request.method == 'POST':
-        auth.logout(request)
-        return redirect('/')
+    # if request.method == 'POST':
+    auth.logout(request)
+    return redirect('/')
 
 
 def get_time_price_list(disciplines):
@@ -114,7 +112,7 @@ def get_distinct_discipline_name(disciplines):
 def select_discipline(request, teacher_pk):
     teacher = get_object_or_404(User, pk=teacher_pk)
     if teacher.role != UserRoles.TEACHER or request.user.role != UserRoles.STUDENT:
-        return
+        return render(request, 'misc/404.html')
     disciplines = DisciplineDescription.objects.filter(teacher_pk=teacher_pk)
     user_context = {
         'disciplines': get_distinct_discipline_name(disciplines),

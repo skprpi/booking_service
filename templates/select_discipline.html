@@ -26,6 +26,11 @@
             transform: translate(-50%, -50%);
         }
 
+        .day-col {
+            width: 290px;
+        }
+
+
 
     </style>
 
@@ -74,12 +79,18 @@
         </div>
     </div>
 
+    <div class="row">
 
-    <form method="POST" autocomplete="off" onsubmit="return false;">
-        {% csrf_token %}
-        <input name="nextStep" type="hidden" id="nextStep">
-        <button id="sendData" class="btn btn-info">Забронировать</button>
-    </form>
+{#        <div class="col-3"></div>#}
+        <div class="col-12  vertical-center day-col">
+
+            <form method="POST" autocomplete="off" onsubmit="return false;">
+                {% csrf_token %}
+                <input name="nextStep" type="hidden" id="nextStep">
+                <button id="sendData" class="col-12 btn btn-info btn-lg btn-block active">Далее</button>
+            </form>
+        </div>
+    </div>
 
 
     <script src="{% static 'js/jQery.js' %}"></script>
